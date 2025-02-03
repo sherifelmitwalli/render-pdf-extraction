@@ -23,7 +23,18 @@ from flask_cors import CORS  # Import CORS
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",
+            "https://pdf-text-extractor-frontend.vercel.app",
+            "https://britta-samantha.vercel.app"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
+        "supports_credentials": False
+    }
+})
 
 
 # Environment configuration (set these in Render’s environment variables)
@@ -195,7 +206,7 @@ def check_dependencies() -> bool:
 
 # --- API Endpoint ---
 
-@app.route("/api/extract", methods=["POST"])
+@app.route("/extract", methods=["POST"])
 def extract_text():
     # Check dependencies first
     if not check_dependencies():
@@ -256,3 +267,4 @@ def health_check():
 if __name__ == "__main__":
     # Use host=0.0.0.0 for Render
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
