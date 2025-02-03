@@ -17,8 +17,14 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from openai import OpenAI
 
 # --- Configuration & Logging ---
+import logging
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS  # Import CORS
+
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
 
 # Environment configuration (set these in Render’s environment variables)
 DEEPINFRA_API_KEY = os.environ.get("DEEPINFRA_API_KEY")
