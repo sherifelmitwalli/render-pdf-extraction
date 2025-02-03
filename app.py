@@ -23,18 +23,23 @@ from flask_cors import CORS  # Import CORS
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
+# Enable CORS for development
 CORS(app, resources={
     r"/*": {
-        "origins": [
-            "http://localhost:3000",
-            "https://pdf-text-extractor-frontend.vercel.app",
-            "https://britta-samantha.vercel.app"
-        ],
+        "origins": "*",  # Allow all origins in development
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Accept"],
-        "supports_credentials": False
+        "allow_headers": ["*"],  # Allow all headers
+        "expose_headers": ["Content-Type", "X-CSRFToken"],
+        "supports_credentials": False,
+        "send_wildcard": True
     }
 })
+
+# Log all requests for debugging
+@app.before_request
+def log_request_info():
+    logging.info('Headers: %s', dict(request.headers))
+    logging.info('Body: %s', request.get_data())
 
 
 # Environment configuration (set these in Render’s environment variables)
