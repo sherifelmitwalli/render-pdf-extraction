@@ -23,17 +23,25 @@ from flask_cors import CORS  # Import CORS
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
-# Enable CORS for development
+# Enable CORS with explicit settings
 CORS(app, resources={
     r"/*": {
         "origins": "*",  # Allow all origins in development
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["*"],  # Allow all headers
-        "expose_headers": ["Content-Type", "X-CSRFToken"],
+        "allow_headers": ["Content-Type", "Accept", "Origin"],
+        "expose_headers": ["Content-Type", "X-Request-ID"],
         "supports_credentials": False,
-        "send_wildcard": True
+        "max_age": 600  # Cache preflight requests for 10 minutes
     }
 })
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Accept,Origin')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return response
 
 # Log all requests for debugging
 @app.before_request
@@ -211,13 +219,23 @@ def check_dependencies() -> bool:
 
 # --- API Endpoint ---
 
-@app.route("/extract", methods=["POST"])
+@app.route("/extract", methods=["POST", "OPTIONS"])
 def extract_text():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+        
+    # For POST requests
     # Check dependencies first
     if not check_dependencies():
         return jsonify({"error": "Required system dependency not installed (poppler)."}), 500
 
+    # Log request details
+    logging.info("Processing PDF extraction request")
+    logging.info(f"Content-Type: {request.content_type}")
+    logging.info(f"Headers: {dict(request.headers)}")
+
     if "file" not in request.files:
+        logging.error("No file in request")
         return jsonify({"error": "No file part in the request."}), 400
 
     file = request.files["file"]
